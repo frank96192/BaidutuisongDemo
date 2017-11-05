@@ -76,6 +76,9 @@ public class MainActivity extends Activity implements OnClickListener {
 		Utils.logStringCache = Utils.getLogText(getApplicationContext());
 
 		
+		/*
+		 * 这是分支版本 version1.0
+		 */
 
 		initView();
 		setListener();
