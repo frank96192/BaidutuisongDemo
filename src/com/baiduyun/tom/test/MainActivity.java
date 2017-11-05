@@ -77,9 +77,10 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		
 		/*
-		 * 这是分支版本 version1.0
+		 * 
 		 */
 
+		//初始化
 		initView();
 		setListener();
 		
