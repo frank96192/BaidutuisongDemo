@@ -11,11 +11,13 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore.Audio;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -65,25 +67,37 @@ public class MainActivity extends Activity implements OnClickListener {
 	private boolean isLogin = false;
 	private Resources resource;
 	private String pkgName = "";
+	/**
+	 * 默认状态
+	 */
+	private boolean isexit;
+
+	private Handler mHandler = new Handler() {
+		public void handleMessage(android.os.Message msg) 
+		{
+           switch (msg.what) {
+		case 0:
+			isexit =false;
+			
+			break;
+
+		default:
+			break;
+		}
+		}
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		 setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_main);
 		// checkApikey();
 		resource = this.getResources();
 		pkgName = this.getPackageName();
 		Utils.logStringCache = Utils.getLogText(getApplicationContext());
 
-		
-		/*
-		 * 
-		 */
-
-		//初始化
 		initView();
 		setListener();
-		
 
 		// Push: 以apikey的方式登录，一般放在主Activity的onCreate中。
 		// 这里把apikey存放于manifest文件中，只是一种存放方式，
@@ -93,9 +107,11 @@ public class MainActivity extends Activity implements OnClickListener {
 		// ！！ATTENTION：You need to modify the value of api_key to your own in
 		// AndroidManifest.xml to use this Demo !!
 		// 启动百度push
-		/*PushManager.startWork(getApplicationContext(),
-				PushConstants.LOGIN_TYPE_API_KEY,
-				Utils.getMetaValue(this, "api_key"));*/
+		/*
+		 * PushManager.startWork(getApplicationContext(),
+		 * PushConstants.LOGIN_TYPE_API_KEY, Utils.getMetaValue(this,
+		 * "api_key"));
+		 */
 		// Push: 如果想基于地理位置推送，可以打开支持地理位置的推送的开关
 		// PushManager.enableLbs(getApplicationContext());
 
@@ -143,7 +159,8 @@ public class MainActivity extends Activity implements OnClickListener {
 	private void initView() {
 		// Resources resource = this.getResources();
 		// String pkgName = this.getPackageName();
-		setContentView(resource.getIdentifier("activity_main", "layout", pkgName));
+		setContentView(resource.getIdentifier("activity_main", "layout",
+				pkgName));
 		akBtnId = resource.getIdentifier("btn_initAK", "id", pkgName);
 		richBtnId = resource.getIdentifier("btn_rich", "id", pkgName);
 		setTagBtnId = resource.getIdentifier("btn_setTags", "id", pkgName);
@@ -204,283 +221,301 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 
 	}
-	
-	
+
 	// 打开富媒体列表界面
-    private void openRichMediaList() {
-        // Push: 打开富媒体消息列表
-        Intent sendIntent = new Intent();
-        sendIntent.setClassName(getBaseContext(),
-                "com.baidu.android.pushservice.richmedia.MediaListActivity");
-        sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        MainActivity.this.startActivity(sendIntent);
-    }
+	private void openRichMediaList() {
+		// Push: 打开富媒体消息列表
+		Intent sendIntent = new Intent();
+		sendIntent.setClassName(getBaseContext(),
+				"com.baidu.android.pushservice.richmedia.MediaListActivity");
+		sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		MainActivity.this.startActivity(sendIntent);
+	}
 
-    // 删除tag操作
-    private void deleteTags() {
-        LinearLayout layout = new LinearLayout(MainActivity.this);
-        layout.setOrientation(LinearLayout.VERTICAL);
+	// 删除tag操作
+	private void deleteTags() {
+		LinearLayout layout = new LinearLayout(MainActivity.this);
+		layout.setOrientation(LinearLayout.VERTICAL);
 
-        final EditText textviewGid = new EditText(MainActivity.this);
-        textviewGid.setHint(R.string.tags_hint);
-        layout.addView(textviewGid);
+		final EditText textviewGid = new EditText(MainActivity.this);
+		textviewGid.setHint(R.string.tags_hint);
+		layout.addView(textviewGid);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(
-                MainActivity.this);
-        builder.setView(layout);
-        builder.setPositiveButton(R.string.text_btn_delTags,
-                new DialogInterface.OnClickListener() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder.setView(layout);
+		builder.setPositiveButton(R.string.text_btn_delTags,
+				new DialogInterface.OnClickListener() {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Push: 删除tag调用方式
-                        List<String> tags = Utils.getTagsList(textviewGid
-                                .getText().toString());
-                        PushManager.delTags(getApplicationContext(), tags);
-                    }
-                });
-        builder.show();
-    }
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// Push: 删除tag调用方式
+						List<String> tags = Utils.getTagsList(textviewGid
+								.getText().toString());
+						PushManager.delTags(getApplicationContext(), tags);
+					}
+				});
+		builder.show();
+	}
 
-    // 设置标签,以英文逗号隔开
-    private void setTags() {
-        LinearLayout layout = new LinearLayout(MainActivity.this);
-        layout.setOrientation(LinearLayout.VERTICAL);
+	// 设置标签,以英文逗号隔开
+	private void setTags() {
+		LinearLayout layout = new LinearLayout(MainActivity.this);
+		layout.setOrientation(LinearLayout.VERTICAL);
 
-        final EditText textviewGid = new EditText(MainActivity.this);
-        textviewGid.setHint(R.string.tags_hint);
-        layout.addView(textviewGid);
+		final EditText textviewGid = new EditText(MainActivity.this);
+		textviewGid.setHint(R.string.tags_hint);
+		layout.addView(textviewGid);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(
-               MainActivity.this);
-        builder.setView(layout);
-        builder.setPositiveButton(R.string.text_btn_setTags,
-                new DialogInterface.OnClickListener() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder.setView(layout);
+		builder.setPositiveButton(R.string.text_btn_setTags,
+				new DialogInterface.OnClickListener() {
 
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Push: 设置tag调用方式
-                        List<String> tags = Utils.getTagsList(textviewGid
-                                .getText().toString());
-                        PushManager.setTags(getApplicationContext(), tags);
-                    }
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// Push: 设置tag调用方式
+						List<String> tags = Utils.getTagsList(textviewGid
+								.getText().toString());
+						PushManager.setTags(getApplicationContext(), tags);
+					}
 
-                });
-        builder.show();
-    }
+				});
+		builder.show();
+	}
 
-    // 以apikey的方式绑定
-    private void initWithApiKey() {
-        // Push: 无账号初始化，用api key绑定
-        PushManager.startWork(getApplicationContext(),
-                PushConstants.LOGIN_TYPE_API_KEY,
-                Utils.getMetaValue(MainActivity.this, "api_key"));
-    }
+	// 以apikey的方式绑定
+	private void initWithApiKey() {
+		// Push: 无账号初始化，用api key绑定
+		PushManager.startWork(getApplicationContext(),
+				PushConstants.LOGIN_TYPE_API_KEY,
+				Utils.getMetaValue(MainActivity.this, "api_key"));
+	}
 
-    // 解绑
-    private void unBindForApp() {
-        // Push: 解绑
-        PushManager.stopWork(getApplicationContext());
-    }
+	// 解绑
+	private void unBindForApp() {
+		// Push: 解绑
+		PushManager.stopWork(getApplicationContext());
+	}
 
-    // 列举tag操作
-    private void showTags() {
-        PushManager.listTags(getApplicationContext());
-    }
+	// 列举tag操作
+	private void showTags() {
+		PushManager.listTags(getApplicationContext());
+	}
 
-    // 设置免打扰时段
-    private void setunDistur() {
-        final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.show();
-        Window window = alertDialog.getWindow();
-        window.setContentView(R.layout.bpush_setundistur_time);
+	// 设置免打扰时段
+	private void setunDistur() {
+		final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+		alertDialog.show();
+		Window window = alertDialog.getWindow();
+		window.setContentView(R.layout.bpush_setundistur_time);
 
-        final TimePicker startPicker = (TimePicker) window
-                .findViewById(R.id.start_time_picker);
-        final TimePicker endPicker = (TimePicker) window
-                .findViewById(R.id.end_time_picker);
-        startPicker.setIs24HourView(true);
-        endPicker.setIs24HourView(true);
-        startPicker
-                .setDescendantFocusability(TimePicker.FOCUS_BLOCK_DESCENDANTS);
-        endPicker
-                .setDescendantFocusability(TimePicker.FOCUS_BLOCK_DESCENDANTS);
+		final TimePicker startPicker = (TimePicker) window
+				.findViewById(R.id.start_time_picker);
+		final TimePicker endPicker = (TimePicker) window
+				.findViewById(R.id.end_time_picker);
+		startPicker.setIs24HourView(true);
+		endPicker.setIs24HourView(true);
+		startPicker
+				.setDescendantFocusability(TimePicker.FOCUS_BLOCK_DESCENDANTS);
+		endPicker.setDescendantFocusability(TimePicker.FOCUS_BLOCK_DESCENDANTS);
 
-        Button set = (Button) window.findViewById(R.id.btn_set);
-        set.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int startHour = startPicker.getCurrentHour();
-                int startMinute = startPicker.getCurrentMinute();
-                int endHour = endPicker.getCurrentHour();
-                int endMinute = endPicker.getCurrentMinute();
+		Button set = (Button) window.findViewById(R.id.btn_set);
+		set.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				int startHour = startPicker.getCurrentHour();
+				int startMinute = startPicker.getCurrentMinute();
+				int endHour = endPicker.getCurrentHour();
+				int endMinute = endPicker.getCurrentMinute();
 
-                if (startHour == 0 && startMinute == 0 && endHour == 0
-                        && endMinute == 0) {
-                    Toast.makeText(getApplicationContext(), R.string.text_cancel_disturb,
-                            Toast.LENGTH_SHORT).show();
-                } else if (startHour > endHour
-                        || (startHour == endHour && startMinute > endMinute)) {
-                    setToastText(getString(R.string.text_first_day) + startHour + ":" + startMinute,
-                            getString(R.string.text_second_day) + endHour + ":" + endMinute);
-                } else {
-                    setToastText(startHour + ":" + startMinute, endHour + ":"
-                            + endMinute);
-                }
+				if (startHour == 0 && startMinute == 0 && endHour == 0
+						&& endMinute == 0) {
+					Toast.makeText(getApplicationContext(),
+							R.string.text_cancel_disturb, Toast.LENGTH_SHORT)
+							.show();
+				} else if (startHour > endHour
+						|| (startHour == endHour && startMinute > endMinute)) {
+					setToastText(getString(R.string.text_first_day) + startHour
+							+ ":" + startMinute,
+							getString(R.string.text_second_day) + endHour + ":"
+									+ endMinute);
+				} else {
+					setToastText(startHour + ":" + startMinute, endHour + ":"
+							+ endMinute);
+				}
 
-                // Push: 设置免打扰时段
-                // startHour startMinute：开始 时间 ，24小时制，取值范围 0~23 0~59
-                // endHour endMinute：结束 时间 ，24小时制，取值范围 0~23 0~59
-                PushManager.setNoDisturbMode(getApplicationContext(),
-                        startHour, startMinute, endHour, endMinute);
+				// Push: 设置免打扰时段
+				// startHour startMinute：开始 时间 ，24小时制，取值范围 0~23 0~59
+				// endHour endMinute：结束 时间 ，24小时制，取值范围 0~23 0~59
+				PushManager.setNoDisturbMode(getApplicationContext(),
+						startHour, startMinute, endHour, endMinute);
 
-                alertDialog.cancel();
-            }
+				alertDialog.cancel();
+			}
 
-        });
-        Button guide = (Button) window.findViewById(R.id.btn_guide);
-        guide.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle(R.string.text_disturb_title)
-                        .setMessage(R.string.text_disturb_explain)
-                        .setPositiveButton(R.string.prompt_confirm, null)
-                        .show();
-            }
-        });
+		});
+		Button guide = (Button) window.findViewById(R.id.btn_guide);
+		guide.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				new AlertDialog.Builder(MainActivity.this)
+						.setTitle(R.string.text_disturb_title)
+						.setMessage(R.string.text_disturb_explain)
+						.setPositiveButton(R.string.prompt_confirm, null)
+						.show();
+			}
+		});
 
-        Button cancel = (Button) window.findViewById(R.id.btn_cancel);
-        cancel.setOnClickListener(new OnClickListener() {
+		Button cancel = (Button) window.findViewById(R.id.btn_cancel);
+		cancel.setOnClickListener(new OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                alertDialog.cancel();
-            }
-        });
+			@Override
+			public void onClick(View v) {
+				alertDialog.cancel();
+			}
+		});
 
-    }
+	}
 
-    private void setToastText(String start, String end) {
-        String text = getString(R.string.text_toast, start, end);
-        int indexTotal = 13 + start.length();
-        int indexPosition = indexTotal + 3 + end.length();
-        SpannableString s = new SpannableString(text);
-        s.setSpan(
-                new ForegroundColorSpan(getResources().getColor(R.color.red)),
-                13, indexTotal, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        s.setSpan(
-                new ForegroundColorSpan(getResources().getColor(R.color.red)),
-                indexTotal + 3, indexPosition,
-                Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
-    }
+	private void setToastText(String start, String end) {
+		String text = getString(R.string.text_toast, start, end);
+		int indexTotal = 13 + start.length();
+		int indexPosition = indexTotal + 3 + end.length();
+		SpannableString s = new SpannableString(text);
+		s.setSpan(
+				new ForegroundColorSpan(getResources().getColor(R.color.red)),
+				13, indexTotal, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+		s.setSpan(
+				new ForegroundColorSpan(getResources().getColor(R.color.red)),
+				indexTotal + 3, indexPosition,
+				Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+		Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
+	}
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
 
-        menu.add(Menu.NONE, Menu.FIRST + 1, 1, R.string.prompt_about).setIcon(
-                android.R.drawable.ic_menu_info_details);
+		menu.add(Menu.NONE, Menu.FIRST + 1, 1, R.string.prompt_about).setIcon(
+				android.R.drawable.ic_menu_info_details);
 
-        menu.add(Menu.NONE, Menu.FIRST + 2, 2, R.string.prompt_help).setIcon(
-                android.R.drawable.ic_menu_help);
+		menu.add(Menu.NONE, Menu.FIRST + 2, 2, R.string.prompt_help).setIcon(
+				android.R.drawable.ic_menu_help);
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
 
-        if (Menu.FIRST + 1 == item.getItemId()) {
-            showAbout();
-            return true;
-        }
-        if (Menu.FIRST + 2 == item.getItemId()) {
-            showHelp();
-            return true;
-        }
+		if (Menu.FIRST + 1 == item.getItemId()) {
+			showAbout();
+			return true;
+		}
+		if (Menu.FIRST + 2 == item.getItemId()) {
+			showHelp();
+			return true;
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    // 关于
-    private void showAbout() {
-        Dialog alertDialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.prompt_about).setMessage(R.string.text_about)
-                .setPositiveButton(R.string.prompt_confirm, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-                        Log.i(TAG, "onclick...");
-                    }
+	// 关于
+	private void showAbout() {
+		Dialog alertDialog = new AlertDialog.Builder(this)
+				.setTitle(R.string.prompt_about)
+				.setMessage(R.string.text_about)
+				.setPositiveButton(R.string.prompt_confirm,
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface arg0, int arg1) {
+								Log.i(TAG, "onclick...");
+							}
 
-                }).create();
-        alertDialog.show();
-    }
+						}).create();
+		alertDialog.show();
+	}
 
-    // 帮助
-    private void showHelp() {
-        Dialog alertDialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.prompt_help).setMessage(R.string.text_help)
-                .setPositiveButton(R.string.prompt_confirm, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-                        Log.i(TAG, "onclick...");
-                    }
+	// 帮助
+	private void showHelp() {
+		Dialog alertDialog = new AlertDialog.Builder(this)
+				.setTitle(R.string.prompt_help)
+				.setMessage(R.string.text_help)
+				.setPositiveButton(R.string.prompt_confirm,
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface arg0, int arg1) {
+								Log.i(TAG, "onclick...");
+							}
 
-                }).create();
-        alertDialog.show();
-    }
+						}).create();
+		alertDialog.show();
+	}
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
+	@Override
+	public void onStart() {
+		super.onStart();
+	}
 
-    @Override
-    public void onResume() {
-        super.onResume();
+	@Override
+	public void onResume() {
+		super.onResume();
 
-        Log.d(TAG, "onResume");
-        updateDisplay();
-    }
+		Log.d(TAG, "onResume");
+		updateDisplay();
+	}
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        String action = intent.getAction();
+	@Override
+	protected void onNewIntent(Intent intent) {
+		String action = intent.getAction();
 
-        if (Utils.ACTION_LOGIN.equals(action)) {
-            // Push: 百度账号初始化，用access token绑定
-            String accessToken = intent
-                    .getStringExtra(Utils.EXTRA_ACCESS_TOKEN);
-            PushManager.startWork(getApplicationContext(),
-                    PushConstants.LOGIN_TYPE_ACCESS_TOKEN, accessToken);
-            isLogin = true;
-        }
+		if (Utils.ACTION_LOGIN.equals(action)) {
+			// Push: 百度账号初始化，用access token绑定
+			String accessToken = intent
+					.getStringExtra(Utils.EXTRA_ACCESS_TOKEN);
+			PushManager.startWork(getApplicationContext(),
+					PushConstants.LOGIN_TYPE_ACCESS_TOKEN, accessToken);
+			isLogin = true;
+		}
 
-        updateDisplay();
-    }
+		updateDisplay();
+	}
 
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
+	@Override
+	public void onStop() {
+		super.onStop();
+	}
 
-    @Override
-    public void onDestroy() {
-        Utils.setLogText(getApplicationContext(), Utils.logStringCache);
-        super.onDestroy();
-    }
+	@Override
+	public void onDestroy() {
+		Utils.setLogText(getApplicationContext(), Utils.logStringCache);
+		super.onDestroy();
+	}
 
-    // 更新界面显示内容
-    private void updateDisplay() {
-        Log.d(TAG, "updateDisplay, logText:" + logText + " cache: "
-                + Utils.logStringCache);
-        if (logText != null) {
-            logText.setText(Utils.logStringCache);
-        }
-        if (scrollView != null) {
-            scrollView.fullScroll(ScrollView.FOCUS_DOWN);
-        }
-    }
+	// 更新界面显示内容
+	private void updateDisplay() {
+		Log.d(TAG, "updateDisplay, logText:" + logText + " cache: "
+				+ Utils.logStringCache);
+		if (logText != null) {
+			logText.setText(Utils.logStringCache);
+		}
+		if (scrollView != null) {
+			scrollView.fullScroll(ScrollView.FOCUS_DOWN);
+		}
+	}
+
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		// TODO Auto-generated method stub
+		Log.d(TAG, "keycode===" + keyCode);
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			if (!isexit) {
+				isexit = true;
+				mHandler.sendEmptyMessageDelayed(0, 2000);
+				Toast.makeText(MainActivity.this, "再按一次退出应用....", Toast.LENGTH_SHORT).show();
+				return true;
+			}
+		}
+		return super.onKeyUp(keyCode, event);
+	}
 
 }
