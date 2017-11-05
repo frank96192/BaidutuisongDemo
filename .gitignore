@@ -1,0 +1,6 @@
+##ignore this file##
+bin/
+gen/
+.classpath
+.project
+.settings      
